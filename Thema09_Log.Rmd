@@ -1,0 +1,39 @@
+---
+title: "Thema09_Log"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(kableExtra)
+```
+
+Urinary biomarkers for pancreatic cancer
+
+https://www.kaggle.com/johnjdavisiv/urinary-biomarkers-for-pancreatic-
+cancer
+
+Research question: Is it possible to detect pancreatic cancer using values of the urinary biomarkers?
+
+## Introduction
+Pancreatic ductal adenocarcinoma (PDAC) is one of the deadiest cancers. The chances of survival are increased when diagnosed in an early stage. However, PDAC shows symptoms when it already spread throughout the body. Most of the time, it's too late by then. There may be a way to detect PCAD in an early stage with a simple urine test, with the use of the following biomarkers: creatinine (Urinary biomarker of kidney function) LYVE1 (Urinary levels of Lymphatic vessel endothelial hyaluronan receptor 1, a protein that may play a role in tumor metastasis), REG1A and REG1B (Urinary levels of a protein that may be associated with pancreas regeneration.), and TFF1 (Urinary levels of Trefoil Factor 1, which may be related to regeneration and repair of the urinary tract)
+
+the attributes in the data interesting for this research are the biomarker values mentioned before. There is also an attribute called diagnosis, in which the diagnosis of the sample is stated, where 1 means no PDAC, 2 means benign hepatobiliary disease (non cancerous, non harmful pancreatic condition), and 3 means that the sample has PDAC.
+
+## EDA
+### Codebook
+```{r, }
+myData <- read.csv("Data/Debernardi et al 2020 data.csv")
+
+columns <- colnames(myData)
+type <- c("character", "character", "character", "double", "character", "double", "logical", "logical", "double", "double", "double", "double", "double", "double")
+unit <- c(NA, NA, NA, "years", "F/M", NA, NA, NA, "U/ml", "mg/ml", "ng/ml", "ng/ml", "ng/ml", "ng/ml")
+descriptions = c("Unique string identifying each subject", "Cohort 1, previously used samples; Cohort 2, newly added samples", "BPTB: Barts Pancreas Tissue Bank, London, UK; ESP: Spanish National Cancer Research Centre, Madrid, Spain; LIV: Liverpool University, UK; UCL: University College London, UK", "Age in years", "M = male, F = female", "1 = control (no pancreatic disease), 2 = benign hepatobiliary disease (119 of which are chronic pancreatitis); 3 = Pancreatic ductal adenocarcinoma, i.e. pancreatic cancer", "For those with pancratic cancer, what stage was it? One of IA, IB, IIA, IIIB, III, IV", "For those with a benign, non-cancerous diagnosis, what was the diagnosis?", "Blood plasma levels of CA 19–9 monoclonal antibody that is often elevated in patients with pancreatic cancer. Only assessed in 350 patients (one goal of the study was to compare various CA 19-9 cutpoints from a blood sample to the model developed using urinary samples).", "Urinary biomarker of kidney function", "Urinary levels of Lymphatic vessel endothelial hyaluronan receptor 1, a protein that may play a role in tumor metastasis", "Urinary levels of a protein that may be associated with pancreas regeneration.", "Urinary levels of Trefoil Factor 1, which may be related to regeneration and repair of the urinary tract", "Urinary levels of a protein that may be associated with pancreas regeneration. Only assessed in 306 patients (one goal of the study was to assess REG1B vs REG1A)")
+codebook <- data.frame(columns, type, unit, descriptions)
+write.csv(codebook, "Codebook.csv", row.names = FALSE)
+knitr::kable(codebook, format = 'latex') %>%
+  kable_styling(full_width = F) %>%
+  column_spec(1, bold = T) %>%
+  column_spec(4, width = "22em")
+```
+
