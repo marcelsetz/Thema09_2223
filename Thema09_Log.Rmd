@@ -1,12 +1,26 @@
 ---
 title: "Thema09_Log"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(kableExtra)
+knitr::opts_chunk$set(echo = TRUE, fig.width = 12,fig.height = 5, warning = FALSE, message = FALSE)
+options(warn = 0)
+library(ggplot2, quietly = TRUE)
+library(gridExtra, quietly = TRUE)
+library(tidyr, quietly = TRUE)
+library(pander, quietly = TRUE)
+library(ggbiplot, quietly = TRUE)
+library(dplyr, quietly = TRUE)
+library(kableExtra, quietly = TRUE)
+library(tidyverse, quietly = TRUE)
 ```
+
+install kableExtra
+install knitr
 
 Urinary biomarkers for pancreatic cancer
 
@@ -15,13 +29,13 @@ cancer
 
 Research question: Is it possible to detect pancreatic cancer using values of the urinary biomarkers?
 
-## Introduction
+# Introduction
 Pancreatic ductal adenocarcinoma (PDAC) is one of the deadiest cancers. The chances of survival are increased when diagnosed in an early stage. However, PDAC shows symptoms when it already spread throughout the body. Most of the time, it's too late by then. There may be a way to detect PCAD in an early stage with a simple urine test, with the use of the following biomarkers: creatinine (Urinary biomarker of kidney function) LYVE1 (Urinary levels of Lymphatic vessel endothelial hyaluronan receptor 1, a protein that may play a role in tumor metastasis), REG1A and REG1B (Urinary levels of a protein that may be associated with pancreas regeneration.), and TFF1 (Urinary levels of Trefoil Factor 1, which may be related to regeneration and repair of the urinary tract)
 
 the attributes in the data interesting for this research are the biomarker values mentioned before. There is also an attribute called diagnosis, in which the diagnosis of the sample is stated, where 1 means no PDAC, 2 means benign hepatobiliary disease (non cancerous, non harmful pancreatic condition), and 3 means that the sample has PDAC.
 
-## EDA
-### Codebook
+# EDA
+## Codebook
 ```{r, }
 myData <- read.csv("Data/Debernardi et al 2020 data.csv")
 
@@ -35,5 +49,165 @@ knitr::kable(codebook, format = 'latex') %>%
   kable_styling(full_width = F) %>%
   column_spec(1, bold = T) %>%
   column_spec(4, width = "22em")
+```
+
+\newpage
+## Data exploration
+### Visualization
+
+```{r}
+str(myData)
+```
+
+For every column, you can find information below
+```{r}
+summary(myData[c(4, 9:14)])
+str(myData)
+```
+Let's have a look at the important data with plots. 
+```{r}
+p1 <- ggplot(myData, aes(x=age)) +
+  geom_histogram(fill = "lightgrey", col = "black", binwidth = 1)
+
+p2 <- ggplot(myData, aes(x=creatinine)) +
+  geom_boxplot()
+p3 <- ggplot(myData, aes(x=LYVE1)) +
+  geom_boxplot()
+p4 <- ggplot(myData, aes(x=REG1B)) +
+  geom_boxplot()
+p5 <- ggplot(myData, aes(x=TFF1)) +
+  geom_boxplot()
+p6 <- ggplot(myData, aes(x=REG1A)) +
+  geom_boxplot()
+
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3)
+```
+
+as you can see, there are a lot of outliers which we need to check. There are also a lot of missing values in the REG1A column, We should remove those.
+
+```{r}
+Q <- quantile(myData$creatinine, probs=c(.25, .75), na.rm = FALSE)
+iqr <- IQR(myData$creatinine)
+up <- Q[2]+1.5*iqr
+low <- Q[1]-1.5*iqr
+
+myData <- subset(myData, myData$creatinine > low & myData$creatinine < up)
+
+Q <- quantile(myData$LYVE1, probs=c(.25, .75), na.rm = FALSE)
+iqr <- IQR(myData$LYVE1)
+up <- Q[2]+1.5*iqr
+low <- Q[1]-1.5*iqr
+
+myData <- subset(myData, myData$LYVE1 > low & myData$LYVE1 < up)
+
+Q <- quantile(myData$REG1B, probs=c(.25, .75), na.rm = FALSE)
+iqr <- IQR(myData$REG1B)
+up <- Q[2]+1.5*iqr
+low <- Q[1]-1.5*iqr
+
+myData <- subset(myData, myData$REG1B > low & myData$REG1B < up)
+
+Q <- quantile(myData$TFF1, probs=c(.25, .75), na.rm = FALSE)
+iqr <- IQR(myData$TFF1)
+up <- Q[2]+1.5*iqr
+low <- Q[1]-1.5*iqr
+
+myData <- subset(myData, myData$TFF1 > low & myData$TFF1 < up)
+
+p1 <- ggplot(myData, aes(x=age)) +
+  geom_histogram(fill = "lightgrey", col = "black", binwidth = 1)
+
+p2 <- ggplot(myData, aes(x=creatinine)) +
+  geom_boxplot()
+p3 <- ggplot(myData, aes(x=LYVE1)) +
+  geom_boxplot()
+p4 <- ggplot(myData, aes(x=REG1B)) +
+  geom_boxplot()
+p5 <- ggplot(myData, aes(x=TFF1)) +
+  geom_boxplot()
+
+grid.arrange(p1, p2, p3, p4, p5, nrow = 3)
+
+```
+
+This looks a lot cleaner and clearer already.  
+Let's take a look at the summary of these columns now.
+
+```{r}
+summary(myData[c(4, 9:14)])
+str(myData)
+```
+
+
+What we should do now, is look at the values of those urinary levels with each diagnosis and see if there are any obvious differences.  
+Let's start with the samples that do not have PDAC
+```{r}
+myData1 <- subset(myData, myData$diagnosis == 1)
+
+p1 <- ggplot(myData1, aes(x=age)) +
+  geom_histogram(fill = "lightgrey", col = "black", binwidth = 1)
+
+p2 <- ggplot(myData1, aes(x=creatinine)) +
+  geom_boxplot()
+p3 <- ggplot(myData1, aes(x=LYVE1)) +
+  geom_boxplot()
+p4 <- ggplot(myData1, aes(x=REG1B)) +
+  geom_boxplot()
+p5 <- ggplot(myData1, aes(x=TFF1)) +
+  geom_boxplot()
+p6 <- ggplot(myData1, aes(x=REG1A)) +
+  geom_boxplot()
+
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3)
+```
+
+Here are the values of the samples with non-cancerous pancreatic conditions.
+
+```{r}
+myData2 <- subset(myData, myData$diagnosis == 2)
+
+p1 <- ggplot(myData2, aes(x=age)) +
+  geom_histogram(fill = "lightgrey", col = "black", binwidth = 1)
+
+p2 <- ggplot(myData2, aes(x=creatinine)) +
+  geom_boxplot()
+p3 <- ggplot(myData2, aes(x=LYVE1)) +
+  geom_boxplot()
+p4 <- ggplot(myData2, aes(x=REG1B)) +
+  geom_boxplot()
+p5 <- ggplot(myData2, aes(x=TFF1)) +
+  geom_boxplot()
+p6 <- ggplot(myData2, aes(x=REG1A)) +
+  geom_boxplot()
+
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3)
+```
+
+And finally the samples that do have PDAC.
+
+```{r}
+myData3 <- subset(myData, myData$diagnosis == 3)
+
+p1 <- ggplot(myData3, aes(x=age)) +
+  geom_histogram(fill = "lightgrey", col = "black", binwidth = 1)
+
+p2 <- ggplot(myData3, aes(x=creatinine)) +
+  geom_boxplot()
+p3 <- ggplot(myData3, aes(x=LYVE1)) +
+  geom_boxplot()
+p4 <- ggplot(myData3, aes(x=REG1B)) +
+  geom_boxplot()
+p5 <- ggplot(myData3, aes(x=TFF1)) +
+  geom_boxplot()
+p6 <- ggplot(myData3, aes(x=REG1A)) +
+  geom_boxplot()
+
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3)
+```
+
+At first glance, there are notable differences but we can further investigate this in future steps of this research.
+
+```{r}
+write.csv(myData, "Data/DataCleaned.csv")
 ```
 
