@@ -1,9 +1,6 @@
 ---
-title: "Thema09_Log"
-output:
-  pdf_document: default
-  html_document:
-    df_print: paged
+title: "Thema09_EDA"
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -12,25 +9,14 @@ options(warn = 0)
 library(ggplot2, quietly = TRUE)
 library(gridExtra, quietly = TRUE)
 library(kableExtra, quietly = TRUE)
-library(dplyr, quietly = TRUE)
 ```
-
-install kableExtra
-install knitr
-
-Urinary biomarkers for pancreatic cancer
-
-https://www.kaggle.com/johnjdavisiv/urinary-biomarkers-for-pancreatic-
-cancer
-
-Research question: Is it possible to detect pancreatic cancer using values of the urinary biomarkers?
-
-How can values of urinary biomarkers detect pancreatic cancer?
 
 # Introduction
 Pancreatic ductal adenocarcinoma (PDAC) is one of the deadiest cancers. The chances of survival are increased when diagnosed in an early stage. However, PDAC shows symptoms when it already spread throughout the body. Most of the time, it's too late by then. There may be a way to detect PCAD in an early stage with a simple urine test, with the use of the following biomarkers: creatinine (Urinary biomarker of kidney function) LYVE1 (Urinary levels of Lymphatic vessel endothelial hyaluronan receptor 1, a protein that may play a role in tumor metastasis), REG1A and REG1B (Urinary levels of a protein that may be associated with pancreas regeneration.), and TFF1 (Urinary levels of Trefoil Factor 1, which may be related to regeneration and repair of the urinary tract)
 
 the attributes in the data interesting for this research are the biomarker values mentioned before. There is also an attribute called diagnosis, in which the diagnosis of the sample is stated, where 1 means no PDAC, 2 means benign hepatobiliary disease (non cancerous, non harmful pancreatic condition), and 3 means that the sample has PDAC.
+
+Research question: Is it possible to detect pancreatic cancer using values of the urinary biomarkers?
 
 # EDA
 ## Codebook
@@ -48,7 +34,6 @@ knitr::kable(codebook, caption="Table 1: The Codebook", format = 'latex') %>%
   column_spec(1, bold = T) %>%
   column_spec(4, width = "22em")
 ```
-
 \newpage
 ## Data exploration
 ### Visualization
@@ -57,6 +42,7 @@ To look at the data and any possible missing data, here's a table containing onl
 relevant <- myData[c(4, 6, 9:14)]
 knitr::kable(relevant, caption="Table 2: Values of biomarkers and the diagnosis")
 ```
+\newpage
 As is it obvious to see, the REG1A column contains a lot of missing values. The question is exactly how is this possible and what does it mean for the rest of the data? The first and most simple solution is that we don't need this column at all, since the REG1B is similar in function and containing all of the data. Another solution that's not very logical, is to use only the rows where there is a value in the REG1A column. The most logical solution in my opinion is to look at every column separately, and then remove the missing data. When the cleaned data then is plotted, it's possible to look at all the columns together and see if there is any correlation or trend to figure out.
 
 
@@ -160,7 +146,13 @@ p6 <- ggplot(myData, aes(x=TFF1, y=REG1B)) +
 
 grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3)
 ```
-I think it's safe to assume that none of these correlate with each other in any way. One thing to notice however, is that LYVE1, REG1B and TFF1 have a lot of values close to zero. We can figure out if this is important or not in a future stage of the research.
+I think it's safe to assume that none of these correlate with each other in any way. One thing to notice however, is that LYVE1, REG1B and TFF1 have a lot of values close to zero. We can figure out if this is important or not in a future stage of the research. 
+
+To ensure that all the values are completely independant we can perform a principal component analysis.
+```{r}
+
+```
+
 
 What we should do now, is look at the values of those urinary levels with each diagnosis and see if there are any obvious differences.  
 Let's start with the samples that do not have PDAC
@@ -251,3 +243,4 @@ At first glance, there are notable differences but we can further investigate th
 ```{r}
 write.csv(myData, "Data/DataCleaned.csv")
 ```
+
