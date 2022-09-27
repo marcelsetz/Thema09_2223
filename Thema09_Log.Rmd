@@ -10,9 +10,13 @@ output:
 knitr::opts_chunk$set(echo = TRUE, fig.width = 12,fig.height = 5, warning = FALSE, message = FALSE)
 options(warn = 0)
 library(ggplot2, quietly = TRUE)
+library(ggbiplot, quietly = TRUE)
 library(gridExtra, quietly = TRUE)
 library(kableExtra, quietly = TRUE)
 library(dplyr, quietly = TRUE)
+library(tidyr, quietly = TRUE)
+library(readr, quietly = TRUE)
+library(pander, quietly = TRUE)
 ```
 
 install kableExtra
@@ -43,20 +47,21 @@ unit <- c(NA, NA, NA, "years", "F/M", NA, NA, NA, "U/ml", "mg/ml", "ng/ml", "ng/
 descriptions = c("Unique string identifying each subject", "Cohort 1, previously used samples; Cohort 2, newly added samples", "BPTB: Barts Pancreas Tissue Bank, London, UK; ESP: Spanish National Cancer Research Centre, Madrid, Spain; LIV: Liverpool University, UK; UCL: University College London, UK", "Age in years", "M = male, F = female", "1 = control (no pancreatic disease), 2 = benign hepatobiliary disease (119 of which are chronic pancreatitis); 3 = Pancreatic ductal adenocarcinoma, i.e. pancreatic cancer", "For those with pancratic cancer, what stage was it? One of IA, IB, IIA, IIIB, III, IV", "For those with a benign, non-cancerous diagnosis, what was the diagnosis?", "Blood plasma levels of CA 19–9 monoclonal antibody that is often elevated in patients with pancreatic cancer. Only assessed in 350 patients (one goal of the study was to compare various CA 19-9 cutpoints from a blood sample to the model developed using urinary samples).", "Urinary biomarker of kidney function", "Urinary levels of Lymphatic vessel endothelial hyaluronan receptor 1, a protein that may play a role in tumor metastasis", "Urinary levels of a protein that may be associated with pancreas regeneration.", "Urinary levels of Trefoil Factor 1, which may be related to regeneration and repair of the urinary tract", "Urinary levels of a protein that may be associated with pancreas regeneration. Only assessed in 306 patients (one goal of the study was to assess REG1B vs REG1A)")
 codebook <- data.frame(columns, type, unit, descriptions)
 write.csv(codebook, "Codebook.csv", row.names = FALSE)
-knitr::kable(codebook, caption="Table 1: The Codebook", format = 'latex') %>%
-  kable_styling(full_width = F) %>%
-  column_spec(1, bold = T) %>%
-  column_spec(4, width = "22em")
+```
+\newpage
+```{r}
+pander(codebook, booktabs = T, caption="The Codebook")
 ```
 
-\newpage
+
 ## Data exploration
 ### Visualization
 To look at the data and any possible missing data, here's a table containing only the relevant columns for this research.
 ```{r}
 relevant <- myData[c(4, 6, 9:14)]
-knitr::kable(relevant, caption="Table 2: Values of biomarkers and the diagnosis")
+pander(head(relevant, n=15), booktabs = T, caption = "Values of biomarkers and the diagnosis")
 ```
+  
 As is it obvious to see, the REG1A column contains a lot of missing values. The question is exactly how is this possible and what does it mean for the rest of the data? The first and most simple solution is that we don't need this column at all, since the REG1B is similar in function and containing all of the data. Another solution that's not very logical, is to use only the rows where there is a value in the REG1A column. The most logical solution in my opinion is to look at every column separately, and then remove the missing data. When the cleaned data then is plotted, it's possible to look at all the columns together and see if there is any correlation or trend to figure out.
 
 
@@ -79,54 +84,13 @@ p6 <- ggplot(myData, aes(x=REG1A)) +
 grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3)
 ```
 
-as you can see, there are also a lot of outliers which we need to check. If we remove the outliers and clean up the data, without removing the missing values of REG1A, we'll get something like this.
+as you can see, there are also a lot of outliers which we need to check. We can normalize the data using a log transformation.
 
 ```{r}
-Q <- quantile(myData$creatinine, probs=c(.25, .75), na.rm = FALSE)
-iqr <- IQR(myData$creatinine)
-up <- Q[2]+1.5*iqr
-low <- Q[1]-1.5*iqr
-
-myDataNO <- subset(myData, myData$creatinine > low & myData$creatinine < up)
-
-Q <- quantile(myDataNO$LYVE1, probs=c(.25, .75), na.rm = FALSE)
-iqr <- IQR(myDataNO$LYVE1)
-up <- Q[2]+1.5*iqr
-low <- Q[1]-1.5*iqr
-
-myDataNO <- subset(myDataNO, myDataNO$LYVE1 > low & myDataNO$LYVE1 < up)
-
-Q <- quantile(myDataNO$REG1B, probs=c(.25, .75), na.rm = FALSE)
-iqr <- IQR(myDataNO$REG1B)
-up <- Q[2]+1.5*iqr
-low <- Q[1]-1.5*iqr
-
-myDataNO <- subset(myDataNO, myDataNO$REG1B > low & myDataNO$REG1B < up)
-
-Q <- quantile(myDataNO$TFF1, probs=c(.25, .75), na.rm = FALSE)
-iqr <- IQR(myDataNO$TFF1)
-up <- Q[2]+1.5*iqr
-low <- Q[1]-1.5*iqr
-
-myDataNO <- subset(myDataNO, myDataNO$TFF1 > low & myDataNO$TFF1 < up)
-
-p1 <- ggplot(myDataNO, aes(x=age)) +
-  geom_histogram(fill = "lightgrey", col = "black", binwidth = 1)
-
-p2 <- ggplot(myDataNO, aes(x=creatinine)) +
-  geom_boxplot()
-p3 <- ggplot(myDataNO, aes(x=LYVE1)) +
-  geom_boxplot()
-p4 <- ggplot(myDataNO, aes(x=REG1B)) +
-  geom_boxplot()
-p5 <- ggplot(myDataNO, aes(x=TFF1)) +
-  geom_boxplot()
-
-grid.arrange(p1, p2, p3, p4, p5, nrow = 3)
-
+log <- log(myData[9:14] +1)
+myData[9:14] <- log
 ```
 
-This looks a lot cleaner, however it is not wise to remove these outliers as they may contain important data in a later stage. 
 
 Before proceeding, it is quite helpful to look at the distribution of the diagnosis column, to see if they're evenly distributed or not.
 
@@ -136,31 +100,6 @@ ggplot(myData, aes(x=diagnosis)) +
   ggtitle("Distribution of the diagnosis")
 
 ```
-Now we can check if the different biomarkers correlate with each other in any way.
-
-```{r}
-p1 <- ggplot(myData, aes(x=creatinine, y=LYVE1)) +
-  geom_point() +
-  ggtitle("Creatinine vs LYVE1")
-p2 <- ggplot(myData, aes(x=creatinine, y=REG1B)) +
-  geom_point() +
-  ggtitle("Creatinine vs REG1B")
-p3 <- ggplot(myData, aes(x=creatinine, y=TFF1)) +
-  geom_point() +
-  ggtitle("Creatinine vs TFF1")
-p4 <- ggplot(myData, aes(x=LYVE1, y=REG1B)) +
-  geom_point() +
-  ggtitle("LYVE1 vs REG1B")
-p5 <- ggplot(myData, aes(x=LYVE1, y=TFF1)) +
-  geom_point() +
-  ggtitle("LYVE1 vs TFF1")
-p6 <- ggplot(myData, aes(x=TFF1, y=REG1B)) +
-  geom_point() +
-  ggtitle("TFF1 vs REG1B")
-
-grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3)
-```
-I think it's safe to assume that none of these correlate with each other in any way. One thing to notice however, is that LYVE1, REG1B and TFF1 have a lot of values close to zero. We can figure out if this is important or not in a future stage of the research.
 
 What we should do now, is look at the values of those urinary levels with each diagnosis and see if there are any obvious differences.  
 Let's start with the samples that do not have PDAC
@@ -251,3 +190,61 @@ At first glance, there are notable differences but we can further investigate th
 ```{r}
 write.csv(myData, "Data/DataCleaned.csv")
 ```
+
+### Correlation
+Now we can check if the different biomarkers correlate with each other in any way.
+
+```{r}
+p1 <- ggplot(myData, aes(x=creatinine, y=LYVE1)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("Creatinine vs LYVE1")
+p2 <- ggplot(myData, aes(x=creatinine, y=REG1B)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("Creatinine vs REG1B")
+p3 <- ggplot(myData, aes(x=creatinine, y=TFF1)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("Creatinine vs TFF1")
+p4 <- ggplot(myData, aes(x=LYVE1, y=REG1B)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("LYVE1 vs REG1B")
+p5 <- ggplot(myData, aes(x=LYVE1, y=TFF1)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("LYVE1 vs TFF1")
+p6 <- ggplot(myData, aes(x=TFF1, y=REG1B)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("TFF1 vs REG1B")
+
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3)
+```
+
+In this visualization there is a bit of correlation visible
+
+
+
+Now, let's prepare the data for machine learning.
+The first step will be to remove the columns  that aren't really necessary and relevant to the research to make it more clear.
+\newpage
+```{r}
+myData <- subset(myData, select = -c(patient_cohort, sample_origin, benign_sample_diagnosis))
+pander(summary(myData), booktabs = T, caption = "Relevant data")
+```
+
+```{r}
+myData_healthy <- subset(myData, diagnosis == 1)
+myData_healthy$diagnosis <- "healthy"
+
+myData_benign <- subset(myData, diagnosis == 2)
+myData_benign$diagnosis <- "benign"
+
+myData_pdac <- subset(myData, diagnosis == 3)
+myData_pdac$diagnosis <- "pdac"
+
+myData <- rbind(myData_healthy, myData_benign, myData_pdac)
+```
+

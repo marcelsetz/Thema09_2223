@@ -40,7 +40,8 @@ knitr::kable(codebook, caption="Table 1: The Codebook", format = 'latex') %>%
 To look at the data and any possible missing data, here's a table containing only the relevant columns for this research.
 ```{r}
 relevant <- myData[c(4, 6, 9:14)]
-knitr::kable(relevant, caption="Table 2: Values of biomarkers and the diagnosis")
+knitr::kable(head(relevant, n=15), caption="Table 2: Values of biomarkers and the diagnosis") %>%
+  kable_styling(position = 'center')
 ```
 \newpage
 As is it obvious to see, the REG1A column contains a lot of missing values. The question is exactly how is this possible and what does it mean for the rest of the data? The first and most simple solution is that we don't need this column at all, since the REG1B is similar in function and containing all of the data. Another solution that's not very logical, is to use only the rows where there is a value in the REG1A column. The most logical solution in my opinion is to look at every column separately, and then remove the missing data. When the cleaned data then is plotted, it's possible to look at all the columns together and see if there is any correlation or trend to figure out.
