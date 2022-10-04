@@ -4,11 +4,15 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
+library(ggbiplot)
+library(ggplot2)
+library(gridExtra)
+library(pander)
 ```
 
 #Results
-
+Here's a comparison of every biomarker to see if they correlate with each other in any way.
 ```{r}
 myData <- read.csv("Data/Debernardi et al 2020 data.csv")
 
@@ -17,9 +21,101 @@ myData[9:14] <- log
 
 myData <- subset(myData, select = -c(patient_cohort, sample_origin, benign_sample_diagnosis))
 
-cor <- cor(myData[,c(2, 4, 7:10)])
-heatmap(cor, scale = "column", Colv = NA, Rowv = NA, main = "Heatmap")
+p1 <- ggplot(myData, aes(x=creatinine, y=LYVE1)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("Creatinine vs LYVE1")
+p2 <- ggplot(myData, aes(x=creatinine, y=REG1B)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("Creatinine vs REG1B")
+p3 <- ggplot(myData, aes(x=creatinine, y=TFF1)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("Creatinine vs TFF1")
+p4 <- ggplot(myData, aes(x=LYVE1, y=REG1B)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("LYVE1 vs REG1B")
+p5 <- ggplot(myData, aes(x=LYVE1, y=TFF1)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("LYVE1 vs TFF1")
+p6 <- ggplot(myData, aes(x=TFF1, y=REG1B)) +
+  geom_point() +
+  geom_smooth(method='lm', formula = y~x) +
+  ggtitle("TFF1 vs REG1B")
+
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3)
 ```
+
+
+```{r}
+cor <- cor(myData[,c(2, 4, 7:10)])
+pander(cor, caption = "correlation matrix")
+heatmap(cor, scale = "column", Rowv = NA, Colv = NA, main = "Heatmap")
+```
+It is visible here that the TFF1 biomarker correlates the most with every other biomarker. In the correlation matrix, it is possible to see that the highest correlation is between the biomarkers TFF1 and LYVE1. However in this matrix there are some outliers that may be important. It is in about 67% of the samples the case that the higher the value of TFF1, the higher the value of LYVE1.
+
+
+```{r}
+
+myData1 <- subset(myData, myData$diagnosis == 1)
+myData2 <- subset(myData, myData$diagnosis == 2)
+myData3 <- subset(myData, myData$diagnosis == 3)
+
+p1 <- ggplot(myData1, aes(x=TFF1)) +
+  geom_boxplot() +
+  ggtitle("Distribution of TFF1, no PDAC") +
+  theme(plot.title=element_text(size=5))
+p2 <- ggplot(myData2, aes(x=TFF1)) +
+  geom_boxplot() +
+  ggtitle("Distribution of TFF1, benign") +
+  theme(plot.title=element_text(size=5))
+p3 <- ggplot(myData3, aes(x=TFF1)) +
+  geom_boxplot() +
+  ggtitle("Distribution of TFF1, PDAC") +
+  theme(plot.title=element_text(size=5))
+p4 <- ggplot(myData1, aes(x=LYVE1)) +
+  geom_boxplot() +
+  ggtitle("Distribution of LYVE1, no PDAC") +
+  theme(plot.title=element_text(size=5))
+p5 <- ggplot(myData2, aes(x=LYVE1)) +
+  geom_boxplot() +
+  ggtitle("Distribution of LYVE1, benign") +
+  theme(plot.title=element_text(size=5))
+p6 <- ggplot(myData3, aes(x=LYVE1)) +
+  geom_boxplot() +
+  ggtitle("Distribution of LYVE1, PDAC") +
+  theme(plot.title=element_text(size=5))
+
+p7 <- ggplot(myData1, aes(x=creatinine)) +
+  geom_boxplot() +
+  ggtitle("Distribution of creatinine, no PDAC") +
+  theme(plot.title=element_text(size=5))
+p8 <- ggplot(myData2, aes(x=creatinine)) +
+  geom_boxplot() +
+  ggtitle("Distribution of creatinine, benign") +
+  theme(plot.title=element_text(size=5))
+p9 <- ggplot(myData3, aes(x=creatinine)) +
+  geom_boxplot() +
+  ggtitle("Distribution of creatinine, PDAC") +
+  theme(plot.title=element_text(size=5))
+p10 <- ggplot(myData1, aes(x=REG1B)) +
+  geom_boxplot() +
+  ggtitle("Distribution of REG1B, no PDAC") +
+  theme(plot.title=element_text(size=5))
+p11 <- ggplot(myData2, aes(x=REG1B)) +
+  geom_boxplot() +
+  ggtitle("Distribution of REG1B, benign") +
+  theme(plot.title=element_text(size=5))
+p12 <- ggplot(myData3, aes(x=REG1B)) +
+  geom_boxplot() +
+  ggtitle("Distribution of REG1B, PDAC", ) +
+  theme(plot.title=element_text(size=5))
+grid.arrange(p1, p4, p7, p10, p2, p5, p8, p11, p3, p6, p9, p12, nrow = 3)
+```
+The values in these biomarkers show quite the difference here, With the TFF1 as well as the LYVe1 biomarker, the higher the value, the more likely it is that this sample has PDAC.
 
 ```{r}
 pca <- prcomp(myData[,c(2, 4, 7:10)], center = TRUE, scale. = TRUE)
@@ -29,3 +125,4 @@ ellipse = F, circle = T)
 
 
 #Conclusion & Discussion
+Using our research and data analysis it is safe to assume that some biomarkers may be important for the diagnosis of PDAC. Especially the biomarkers TFF1 and LYVE1 show a significant correlation with each other and it was visible that the higher those values, the higher the chance of PDAC is. The effect of non-cancerous pancreatic conditions and PDAC on TFF1 and LYVE1 is the best visible, the rest of the biomarkers don't show a significant effect on pancreatic conditions. Ofcourse this is extremely reliable, due to all the outliers. But if you take a urine sample from a patient and both the TFF1 and LYVE1 biomarkers are a high value, then maybe it's wise to further investigate if the patient has PDAC or not
