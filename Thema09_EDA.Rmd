@@ -49,9 +49,10 @@ As is it obvious to see, the REG1A column contains a lot of missing values. The 
 
 knowing this, let's have a look at the important raw data with the use of boxplots. 
 ```{r}
-p1 <- ggplot(myData, aes(x=age)) +
-  geom_histogram(fill = "lightgrey", col = "black", binwidth = 1)
 
+
+p1 <- ggplot(myData, aes(x=age)) +
+  geom_boxplot()
 p2 <- ggplot(myData, aes(x=creatinine)) +
   geom_boxplot()
 p3 <- ggplot(myData, aes(x=LYVE1)) +

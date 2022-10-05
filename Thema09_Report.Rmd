@@ -11,7 +11,7 @@ library(gridExtra)
 library(pander)
 ```
 
-#Results
+# Results
 Here's a comparison of every biomarker to see if they correlate with each other in any way.
 ```{r}
 myData <- read.csv("Data/Debernardi et al 2020 data.csv")
@@ -115,6 +115,7 @@ p12 <- ggplot(myData3, aes(x=REG1B)) +
   theme(plot.title=element_text(size=5))
 grid.arrange(p1, p4, p7, p10, p2, p5, p8, p11, p3, p6, p9, p12, nrow = 3)
 ```
+
 The values in these biomarkers show quite the difference here, With the TFF1 as well as the LYVe1 biomarker, the higher the value, the more likely it is that this sample has PDAC.
 
 ```{r}
@@ -124,5 +125,5 @@ ellipse = F, circle = T)
 ```
 
 
-#Conclusion & Discussion
+# Conclusion & Discussion
 Using our research and data analysis it is safe to assume that some biomarkers may be important for the diagnosis of PDAC. Especially the biomarkers TFF1 and LYVE1 show a significant correlation with each other and it was visible that the higher those values, the higher the chance of PDAC is. The effect of non-cancerous pancreatic conditions and PDAC on TFF1 and LYVE1 is the best visible, the rest of the biomarkers don't show a significant effect on pancreatic conditions. Ofcourse this is extremely reliable, due to all the outliers. But if you take a urine sample from a patient and both the TFF1 and LYVE1 biomarkers are a high value, then maybe it's wise to further investigate if the patient has PDAC or not
