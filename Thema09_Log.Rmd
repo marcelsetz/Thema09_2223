@@ -235,16 +235,108 @@ myData <- subset(myData, select = -c(patient_cohort, sample_origin, benign_sampl
 pander(summary(myData), booktabs = T, caption = "Relevant data")
 ```
 
+## Quality Metrics
+There are 3 possible diagnoses in this data, those are 1: The patient has PDAC; 2: The patient has pancreatic condition, but not cancer; and 3, The patient doesn't have any form of pancreatic conditions or cancer. 
+
+It is important to determine the positive and negative diagnoses here, to find the true positives and true negatives. This research is about whether the sample has pancreatic cancer or not. So positive in this case will be diagnosis 1, and negative both 2 and 3, since they're both non-cancerous.
+
+False negatives is the least wanted with research like this, because in that case the patient has PDAC, but the test says the patient doesn't, so there won't be any further treatment, while the patient needs it. it's better to have someone classified as PDAC, while the sample doesn't have it, because in further research to really test the person on PDAC, the test will come out negative.
+
+In the machine learning process it's important to have the lowest possible amount of false negatives, so the false negative rate (FNR) should be as low as possible. The FNR tells of all the truly positives, what rate is wrongly classified. In the Java wrapper later on, it is important to calculate the FNR to see if it is reasonably low. On the other hand it is important to have a high amount of true positives, so those patients get the right treatment in time. So the FNR must be as low as possible while the TPR must be as high as possible.
+
+## Machine learning algorithms
+The next step is to determine which ML algorithm gives the best results. First let's look at the baseline accuracy with ZeroR. Weka correctly classifies 35.25% of the instances with 10-fold cross-validation. Using the experimenter in weka, it is possible to see the performance of every algorithm really fast. The experimenter uses 10-fold cross-validation and repeats it 10 times. So in the data there are 100 rows per ML algorithm. The code below reads per algorithm and averages the 100 rows to get a highly accurate representation of the results. In the table below there is a summary of every used cost-sensitive classifier and the resulting quality metrics. Remember it is important that the TPR is as high as possible, while the FNR is as low as possible.
+
 ```{r}
-myData_healthy <- subset(myData, diagnosis == 1)
-myData_healthy$diagnosis <- "healthy"
+ML_dataLoc <- "Data/Experiment.csv"
+ML_data <- read.csv(ML_dataLoc)
+ML_ZeroR <- ML_data[c(1:100),]
+ML_OneR <- ML_data[c(101:200),]
+ML_J48 <- ML_data[c(201:300),]
+ML_IBK <- ML_data[c(301:400),]
+ML_NaiveBayes <- ML_data[c(401:500),]
+ML_SimpleLog <- ML_data[c(501:600),]
+ML_SMO <- ML_data[c(601:700),]
+ML_RandomForest <- ML_data[c(701:800),]
+algos <- list(ML_ZeroR, ML_OneR, ML_J48, ML_IBK, ML_NaiveBayes, ML_SimpleLog, ML_SMO, ML_RandomForest)
+avgs_pc <- list()
+avgs_pi <- list()
+avgs_tp <- list()
+avgs_fp <- list()
+avgs_tn <- list()
+avgs_fn <- list()
+avgs_pr <- list()
+avgs_rc <- list()
+avgs_roc <- list()
 
-myData_benign <- subset(myData, diagnosis == 2)
-myData_benign$diagnosis <- "benign"
+for (algo in algos) {
+  percent_correct <- algo[3]
+  avg <- lapply(percent_correct, mean)
+  avgs_pc[[length(avgs_pc) + 1]] <- avg
+}
+for (algo in algos) {
+  percent_incorrect <- algo[4]
+  avg <- lapply(percent_incorrect, mean)
+  avgs_pi[[length(avgs_pi) + 1]] <- avg
+}
+for (algo in algos) {
+  TP <- algo[5]
+  avg <- lapply(TP, mean)
+  avgs_tp[[length(avgs_tp) + 1]] <- avg
+}
+for (algo in algos) {
+  FP <- algo[6]
+  avg <- lapply(FP, mean)
+  avgs_fp[[length(avgs_fp) + 1]] <- avg
+}
+for (algo in algos) {
+  TN <- algo[7]
+  avg <- lapply(TN, mean)
+  avgs_tn[[length(avgs_tn) + 1]] <- avg
+}
+for (algo in algos) {
+  FN <- algo[8]
+  avg <- lapply(FN, mean)
+  avgs_fn[[length(avgs_fn) + 1]] <- avg
+}
+for (algo in algos) {
+  precision <- algo[9]
+  avg <- lapply(precision, mean)
+  avgs_pr[[length(avgs_pr) + 1]] <- avg
+}
+for (algo in algos) {
+  recall <- algo[10]
+  avg <- lapply(recall, mean)
+  avgs_rc[[length(avgs_rc) + 1]] <- avg
+}
+for (algo in algos) {
+  roc_area <- algo[11]
+  avg <- lapply(roc_area, mean)
+  avgs_roc[[length(avgs_roc) + 1]] <- avg
+}
+avgs_df <- data.frame(row.names = c("ZeroR", "OneR", "J48", "IBK", "NaiveBayes", "SimpleLogistics", "SMO", "RandomForest"))
 
-myData_pdac <- subset(myData, diagnosis == 3)
-myData_pdac$diagnosis <- "pdac"
+vec_pc <- unlist(avgs_pc)
+vec_pi <- unlist(avgs_pi)
+vec_tp <- unlist(avgs_tp)
+vec_fp <- unlist(avgs_fp)
+vec_tn <- unlist(avgs_tn)
+vec_fn <- unlist(avgs_fn)
+vec_pr <- unlist(avgs_pr)
+vec_rc <- unlist(avgs_rc)
+vec_roc <- unlist(avgs_roc)
 
-myData <- rbind(myData_healthy, myData_benign, myData_pdac)
+avgs_df$percent_correct_avgs <- vec_pc
+avgs_df$percent_incorrect_avgs <- vec_pi
+avgs_df$TP_avgs <- vec_tp
+avgs_df$FP_avgs <- vec_fp
+avgs_df$TN_avgs <- vec_tn
+avgs_df$FN_avgs <- vec_fn
+avgs_df$precision_avgs <- vec_pr
+avgs_df$recall_avgs <- vec_rc
+avgs_df$ROC_Area_avgs <- vec_roc
+
+pander(avgs_df, booktabs = T, caption = "Machine Learning Summary")
+write.csv(avgs_df, file = "Data/derbernardi_summary.csv")
 ```
 
