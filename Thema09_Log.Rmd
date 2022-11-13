@@ -1,7 +1,9 @@
 ---
 title: "Thema09_Log"
 output:
-  pdf_document: default
+  pdf_document:
+    toc: true
+    toc_depth: 3
   html_document:
     df_print: paged
 ---
@@ -248,7 +250,7 @@ In the machine learning process it's important to have the lowest possible amoun
 The next step is to determine which ML algorithm gives the best results. First let's look at the baseline accuracy with ZeroR. Weka correctly classifies 35.25% of the instances with 10-fold cross-validation. Using the experimenter in weka, it is possible to see the performance of every algorithm really fast. The experimenter uses 10-fold cross-validation and repeats it 10 times. So in the data there are 100 rows per ML algorithm. The code below reads per algorithm and averages the 100 rows to get a highly accurate representation of the results. In the table below there is a summary of every used cost-sensitive classifier and the resulting quality metrics. Remember it is important that the TPR is as high as possible, while the FNR is as low as possible.
 
 ```{r}
-ML_dataLoc <- "Data/Experiment.csv"
+ML_dataLoc <- "Data/ExperimentClean.csv"
 ML_data <- read.csv(ML_dataLoc)
 ML_ZeroR <- ML_data[c(1:100),]
 ML_OneR <- ML_data[c(101:200),]
@@ -270,47 +272,47 @@ avgs_rc <- list()
 avgs_roc <- list()
 
 for (algo in algos) {
-  percent_correct <- algo[3]
+  percent_correct <- algo[2]
   avg <- lapply(percent_correct, mean)
   avgs_pc[[length(avgs_pc) + 1]] <- avg
 }
 for (algo in algos) {
-  percent_incorrect <- algo[4]
+  percent_incorrect <- algo[3]
   avg <- lapply(percent_incorrect, mean)
   avgs_pi[[length(avgs_pi) + 1]] <- avg
 }
 for (algo in algos) {
-  TP <- algo[5]
+  TP <- algo[4]
   avg <- lapply(TP, mean)
   avgs_tp[[length(avgs_tp) + 1]] <- avg
 }
 for (algo in algos) {
-  FP <- algo[6]
+  FP <- algo[5]
   avg <- lapply(FP, mean)
   avgs_fp[[length(avgs_fp) + 1]] <- avg
 }
 for (algo in algos) {
-  TN <- algo[7]
+  TN <- algo[6]
   avg <- lapply(TN, mean)
   avgs_tn[[length(avgs_tn) + 1]] <- avg
 }
 for (algo in algos) {
-  FN <- algo[8]
+  FN <- algo[7]
   avg <- lapply(FN, mean)
   avgs_fn[[length(avgs_fn) + 1]] <- avg
 }
 for (algo in algos) {
-  precision <- algo[9]
+  precision <- algo[8]
   avg <- lapply(precision, mean)
   avgs_pr[[length(avgs_pr) + 1]] <- avg
 }
 for (algo in algos) {
-  recall <- algo[10]
+  recall <- algo[9]
   avg <- lapply(recall, mean)
   avgs_rc[[length(avgs_rc) + 1]] <- avg
 }
 for (algo in algos) {
-  roc_area <- algo[11]
+  roc_area <- algo[10]
   avg <- lapply(roc_area, mean)
   avgs_roc[[length(avgs_roc) + 1]] <- avg
 }
