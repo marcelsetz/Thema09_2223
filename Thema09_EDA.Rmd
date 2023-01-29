@@ -1,3 +1,9 @@
+---
+title: "Thema09_EDA"
+output: pdf_document
+date: "2023-01-29"
+---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, fig.width = 12,fig.height = 5, warning = FALSE, message = FALSE)
 options(warn = 0)

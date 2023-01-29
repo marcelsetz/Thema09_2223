@@ -1,6 +1,6 @@
-
 ---
 title: "Thema09_Log"
+date: "2023-01-29"
 output:
   pdf_document:
     toc: true
@@ -255,7 +255,7 @@ False negatives is the least wanted with research like this, because in that cas
 In the machine learning process it's important to have the lowest possible amount of false negatives, so the false negative rate (FNR) should be as low as possible. The FNR tells of all the truly positives, what rate is wrongly classified. In the Java wrapper later on, it is important to calculate the FNR to see if it is reasonably low. On the other hand it is important to have a high amount of true positives, so those patients get the right treatment in time. So the FNR must be as low as possible while the TPR must be as high as possible.
 
 ## Machine learning algorithms
-To determine the best machine learning algorithm for the project, it is necessary to evaluate the baseline accuracy using the ZeroR method. The 10-fold cross-validation method is used to determine the accuracy of the different algorithms, which correctly classifies 35.25% of instances. To make the process of evaluating the performance of various algorithms more efficient, the experimenter feature in Weka is utilized. This feature allows for repeating the 10-fold cross-validation process 10 times for each algorithm, providing a more accurate representation of the results. A summary of the results for each cost-sensitive classifier is presented in the table below, including the true positive rate (TPR) and false negative rate (FNR). It is important to keep in mind that the ultimate goal is to achieve a high TPR and a low FNR.
+The next step is to determine which ML algorithm gives the best results. First let's look at the baseline accuracy with ZeroR. Weka correctly classifies 35.25% of the instances with 10-fold cross-validation. Using the experimenter in weka, it is possible to see the performance of every algorithm really fast. The experimenter uses 10-fold cross-validation and repeats it 10 times. So in the data there are 100 rows per ML algorithm. The code below reads per algorithm and averages the 100 rows to get a highly accurate representation of the results. In the table below there is a summary of every used cost-sensitive classifier and the resulting quality metrics. Remember it is important that the TPR is as high as possible, while the FNR is as low as possible.
 
 ```{r}
 ML_dataLoc <- "Data/ExperimentClean.csv"
