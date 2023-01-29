@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 title: "Thema09_Report"
 author: Marcel Setz
@@ -206,5 +207,4 @@ This research can be improved in multiple ways. These possibilities are written 
 The main issue here is that the Java wrapper is not very user-friendly. The program can now only be runned via the command line with a few options. For a non-programmer, it can be really hard to understand.  
 
 A web application implementing this program within a user-friendly environment can drastically improve the way this program is used.  
-
 The target audience would be people working in health care with large amounts of biomarker data, that needs to be diagnosed. The program can process a lot of patients very quickly.  
