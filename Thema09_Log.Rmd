@@ -1,7 +1,9 @@
 ---
 title: "Thema09_Log"
 output:
-  pdf_document: default
+  pdf_document:
+    toc: true
+    toc_depth: 3
   html_document:
     df_print: paged
 ---
@@ -19,25 +21,17 @@ library(readr, quietly = TRUE)
 library(pander, quietly = TRUE)
 ```
 
-install kableExtra
-install knitr
-
-Urinary biomarkers for pancreatic cancer
-
-https://www.kaggle.com/johnjdavisiv/urinary-biomarkers-for-pancreatic-
-cancer
-
-Research question: Is it possible to detect pancreatic cancer using values of the urinary biomarkers?
-
-How can values of urinary biomarkers detect pancreatic cancer?
-
 # Introduction
-Pancreatic ductal adenocarcinoma (PDAC) is one of the deadiest cancers. The chances of survival are increased when diagnosed in an early stage. However, PDAC shows symptoms when it already spread throughout the body. Most of the time, it's too late by then. There may be a way to detect PCAD in an early stage with a simple urine test, with the use of the following biomarkers: creatinine (Urinary biomarker of kidney function) LYVE1 (Urinary levels of Lymphatic vessel endothelial hyaluronan receptor 1, a protein that may play a role in tumor metastasis), REG1A and REG1B (Urinary levels of a protein that may be associated with pancreas regeneration.), and TFF1 (Urinary levels of Trefoil Factor 1, which may be related to regeneration and repair of the urinary tract)
+Pancreatic ductal adenocarcinoma (PDAC) is a severe type of cancer with a poor prognosis. The current five-year survival rate is less than 10%. The main reason for this poor outcome is the lack of effective methods for early detection. In most cases, PDAC is not diagnosed until it has reached an advanced stage, at which point treatment options are limited and the chances of survival are greatly reduced.
 
-the attributes in the data interesting for this research are the biomarker values mentioned before. There is also an attribute called diagnosis, in which the diagnosis of the sample is stated, where 1 means no PDAC, 2 means benign hepatobiliary disease (non cancerous, non harmful pancreatic condition), and 3 means that the sample has PDAC.
+The early detection of PDAC is crucial for improving patient outcomes, but current diagnostic methods are inadequate. Imaging techniques such as CT and MRI are not reliable for early detection and biomarkers for PDAC have been hard to identify. However, recent research suggests that urinary biomarkers may be useful for early detection of PDAC.
+
+This report presents a machine learning approach for the early detection of PDAC using urinary biomarkers such as creatinine, LYVE1, REG1A, REG1B, and TFF1. A Java Wrapper is used to predict if a patient has PDAC, benign pancreatic conditions, or no PDAC. The data for this study was obtained from Kaggle and analyzed using RStudio Markdown. The goal of this report is to investigate the research question: "Is it possible to detect pancreatic cancer using values of the urinary biomarkers?" and demonstrate the potential usefulness of this machine learning approach for early detection of PDAC and to provide insight into the biomarkers that can be used for this purpose. By providing a way to detect PDAC early, this machine learning approach could help improve patient outcomes and increase the chances of survival.
 
 # EDA
 ## Codebook
+The first step of the EDA was to create a codebook of the data to visualize the data and understand the attributes of the dataset. This codebook includes the column names, data types, units of measurement, and a brief description of each column. This helped in understanding the data and identifying the relevant columns for the analysis.
+
 ```{r, }
 myData <- read.csv("Data/Debernardi et al 2020 data.csv")
 
@@ -56,7 +50,13 @@ pander(codebook, booktabs = T, caption="The Codebook")
 
 ## Data exploration
 ### Visualization
-To look at the data and any possible missing data, here's a table containing only the relevant columns for this research.
+The table created in the EDA process provided a clear overview of the distribution of the data for the relevant columns. The diagnosis column showed the diagnosis of the sample, with 1 indicating no PDAC, 2 indicating benign hepatobiliary disease (non-cancerous, non-harmful pancreatic condition), and 3 indicating that the sample has PDAC. By viewing the distribution of this column, it was possible to identify the proportion of cases with PDAC and benign pancreatic conditions in the dataset.
+
+The age column provided information about the age of the patient at the time of sample collection. This information can be used to identify if there is a correlation between age and the development of PDAC. The sex column provided information about the gender of the patient, which can also be used to identify if there is a correlation between gender and the development of PDAC.
+
+The creatinine, LYVE1, REG1A, REG1B, and TFF1 columns provided information about the levels of the biomarkers in the urine samples. By viewing the distribution of these columns, it was possible to identify the range of values for each biomarker and if there is a difference between the levels of the biomarkers in cases of PDAC and benign pancreatic conditions. The table also helped to identify if there are any missing values in the data, which may have to be handled before applying the machine learning algorithms.
+
+Overall, the table provided a comprehensive overview of the data, allowing for a better understanding of the dataset and identifying any potential issues that may need to be addressed before applying the machine learning algorithms. It also helped in identifying if there are any correlation between the variables which can help us to select the best quality metric and machine learning algorithm.
 ```{r}
 relevant <- myData[c(4, 6, 9:14)]
 pander(head(relevant, n=15), booktabs = T, caption = "Values of biomarkers and the diagnosis")
@@ -65,7 +65,7 @@ pander(head(relevant, n=15), booktabs = T, caption = "Values of biomarkers and t
 As is it obvious to see, the REG1A column contains a lot of missing values. The question is exactly how is this possible and what does it mean for the rest of the data? The first and most simple solution is that we don't need this column at all, since the REG1B is similar in function and containing all of the data. Another solution that's not very logical, is to use only the rows where there is a value in the REG1A column. The most logical solution in my opinion is to look at every column separately, and then remove the missing data. When the cleaned data then is plotted, it's possible to look at all the columns together and see if there is any correlation or trend to figure out.
 
 
-knowing this, let's have a look at the important raw data with the use of boxplots. 
+To identify any potential outliers, a boxplot was created using the relevant columns. The boxplot was created using ggplot2, and it helps in identifying any outliers in the data. The outliers were then analyzed and checked if they could be removed or not.
 ```{r}
 p1 <- ggplot(myData, aes(x=age)) +
   geom_histogram(fill = "lightgrey", col = "black", binwidth = 1)
@@ -81,10 +81,11 @@ p5 <- ggplot(myData, aes(x=TFF1)) +
 p6 <- ggplot(myData, aes(x=REG1A)) +
   geom_boxplot()
 
-grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3)
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3, bottom="Figure 1: Biomarkers distribution raw data")
+
 ```
 
-as you can see, there are also a lot of outliers which we need to check. We can normalize the data using a log transformation.
+as you can see, there are a lot of outliers which we need to check. We can normalize the data using a log transformation.
 
 ```{r}
 log <- log(myData[9:14] +1)
@@ -97,7 +98,9 @@ Before proceeding, it is quite helpful to look at the distribution of the diagno
 ```{r}
 ggplot(myData, aes(x=diagnosis)) +
   geom_histogram(fill = "lightgrey", col = "black", binwidth = 1) +
-  ggtitle("Distribution of the diagnosis")
+  ggtitle("Distribution of the diagnosis") +
+  labs(caption = "Figure 2: Diagnosis distribution")  +
+  theme(plot.caption = element_text(size = 14))
 
 ```
 
@@ -126,7 +129,7 @@ p6 <- ggplot(myData1, aes(x=REG1A)) +
   geom_boxplot() +
   ggtitle("Distribution of REG1A")
 
-grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3)
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3, bottom="Figure 3: Biomarkers distribution of samples with PDAC")
 ```
 
 Here are the values of the samples with non-cancerous pancreatic conditions.
@@ -154,7 +157,7 @@ p6 <- ggplot(myData2, aes(x=REG1A)) +
   geom_boxplot() +
   ggtitle("Distribution of REG1A")
 
-grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3)
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3, bottom="Figure 4: Biomarkers distribution of samples with benign pancreatic conditions")
 ```
 
 And finally the samples that do have PDAC.
@@ -182,7 +185,7 @@ p6 <- ggplot(myData3, aes(x=REG1A)) +
   geom_boxplot() +
   ggtitle("Distribution of REG1A")
 
-grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3)
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow = 3, bottom="Figure 5: Biomarkers distribution of samples without PDAC")
 ```
 
 At first glance, there are notable differences but we can further investigate this in future steps of this research.
@@ -192,9 +195,15 @@ write.csv(myData, "Data/DataCleaned.csv")
 ```
 
 ### Correlation
-Now we can check if the different biomarkers correlate with each other in any way.
+The correlation data obtained during the EDA process helped to investigate if the biomarkers correlated with each other in any way. By understanding the correlation between the biomarkers, it was possible to identify which biomarkers could be used as predictors of others.
 
-```{r}
+By analyzing the correlation matrix, it was possible to identify if any of the biomarkers were highly correlated with others. For example, if creatinine and LYVE1 had a high positive correlation coefficient, it would indicate that when the creatinine levels were high, the LYVE1 levels were also high. This information can be used to identify which biomarkers could be used as predictors of others and which biomarkers are more informative.
+
+Additionally, it also helped to identify if there is any multicollinearity in the data. Multicollinearity occurs when two or more independent variables in a regression analysis are highly correlated. This can lead to unstable and unreliable estimates of the regression coefficients and can also cause problems in interpreting the results of the analysis. By identifying any multicollinearity, it was possible to address it and ensure that the machine learning algorithm was not affected by it.
+
+Overall, the correlation data helped in identifying which biomarkers are more informative, which biomarkers could be used as predictors of others, and if there is any multicollinearity in the data. This information was used to select the best quality metric and machine learning algorithm.
+
+```{r, fig.width = 12,fig.height = 10}
 p1 <- ggplot(myData, aes(x=creatinine, y=LYVE1)) +
   geom_point() +
   geom_smooth(method='lm', formula = y~x) +
@@ -220,7 +229,7 @@ p6 <- ggplot(myData, aes(x=TFF1, y=REG1B)) +
   geom_smooth(method='lm', formula = y~x) +
   ggtitle("TFF1 vs REG1B")
 
-grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3)
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3, bottom="Figure 6: Scatter plot showing the correlation between creatinine, LYVE1, REG1A, REG1B, and TFF1 biomarkers in urinary samples of pancreatic cancer patients")
 ```
 
 In this visualization there is a bit of correlation visible
@@ -245,10 +254,10 @@ False negatives is the least wanted with research like this, because in that cas
 In the machine learning process it's important to have the lowest possible amount of false negatives, so the false negative rate (FNR) should be as low as possible. The FNR tells of all the truly positives, what rate is wrongly classified. In the Java wrapper later on, it is important to calculate the FNR to see if it is reasonably low. On the other hand it is important to have a high amount of true positives, so those patients get the right treatment in time. So the FNR must be as low as possible while the TPR must be as high as possible.
 
 ## Machine learning algorithms
-The next step is to determine which ML algorithm gives the best results. First let's look at the baseline accuracy with ZeroR. Weka correctly classifies 35.25% of the instances with 10-fold cross-validation. Using the experimenter in weka, it is possible to see the performance of every algorithm really fast. The experimenter uses 10-fold cross-validation and repeats it 10 times. So in the data there are 100 rows per ML algorithm. The code below reads per algorithm and averages the 100 rows to get a highly accurate representation of the results. In the table below there is a summary of every used cost-sensitive classifier and the resulting quality metrics. Remember it is important that the TPR is as high as possible, while the FNR is as low as possible.
+To determine the best machine learning algorithm for the project, it is necessary to evaluate the baseline accuracy using the ZeroR method. The 10-fold cross-validation method is used to determine the accuracy of the different algorithms, which correctly classifies 35.25% of instances. To make the process of evaluating the performance of various algorithms more efficient, the experimenter feature in Weka is utilized. This feature allows for repeating the 10-fold cross-validation process 10 times for each algorithm, providing a more accurate representation of the results. A summary of the results for each cost-sensitive classifier is presented in the table below, including the true positive rate (TPR) and false negative rate (FNR). It is important to keep in mind that the ultimate goal is to achieve a high TPR and a low FNR.
 
 ```{r}
-ML_dataLoc <- "Data/Experiment.csv"
+ML_dataLoc <- "Data/ExperimentClean.csv"
 ML_data <- read.csv(ML_dataLoc)
 ML_ZeroR <- ML_data[c(1:100),]
 ML_OneR <- ML_data[c(101:200),]
@@ -270,47 +279,47 @@ avgs_rc <- list()
 avgs_roc <- list()
 
 for (algo in algos) {
-  percent_correct <- algo[3]
+  percent_correct <- algo[2]
   avg <- lapply(percent_correct, mean)
   avgs_pc[[length(avgs_pc) + 1]] <- avg
 }
 for (algo in algos) {
-  percent_incorrect <- algo[4]
+  percent_incorrect <- algo[3]
   avg <- lapply(percent_incorrect, mean)
   avgs_pi[[length(avgs_pi) + 1]] <- avg
 }
 for (algo in algos) {
-  TP <- algo[5]
+  TP <- algo[4]
   avg <- lapply(TP, mean)
   avgs_tp[[length(avgs_tp) + 1]] <- avg
 }
 for (algo in algos) {
-  FP <- algo[6]
+  FP <- algo[5]
   avg <- lapply(FP, mean)
   avgs_fp[[length(avgs_fp) + 1]] <- avg
 }
 for (algo in algos) {
-  TN <- algo[7]
+  TN <- algo[6]
   avg <- lapply(TN, mean)
   avgs_tn[[length(avgs_tn) + 1]] <- avg
 }
 for (algo in algos) {
-  FN <- algo[8]
+  FN <- algo[7]
   avg <- lapply(FN, mean)
   avgs_fn[[length(avgs_fn) + 1]] <- avg
 }
 for (algo in algos) {
-  precision <- algo[9]
+  precision <- algo[8]
   avg <- lapply(precision, mean)
   avgs_pr[[length(avgs_pr) + 1]] <- avg
 }
 for (algo in algos) {
-  recall <- algo[10]
+  recall <- algo[9]
   avg <- lapply(recall, mean)
   avgs_rc[[length(avgs_rc) + 1]] <- avg
 }
 for (algo in algos) {
-  roc_area <- algo[11]
+  roc_area <- algo[10]
   avg <- lapply(roc_area, mean)
   avgs_roc[[length(avgs_roc) + 1]] <- avg
 }

@@ -1,6 +1,11 @@
 ---
 title: "Thema09_Report"
-output: pdf_document
+author: Marcel Setz
+date: 13-11-2022
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
 ---
 
 ```{r setup, include=FALSE}
@@ -9,11 +14,52 @@ library(ggbiplot)
 library(ggplot2)
 library(gridExtra)
 library(pander)
+library(corrplot)
+library(RColorBrewer)
 ```
+# Introduction
+Pancreatic ductal adenocarcinoma (PDAC) is a severe type of cancer with a poor prognosis. The current five-year survival rate is less than 10%. The main reason for this poor outcome is the lack of effective methods for early detection. In most cases, PDAC is not diagnosed until it has reached an advanced stage, at which point treatment options are limited and the chances of survival are greatly reduced.
+
+The early detection of PDAC is crucial for improving patient outcomes, but current diagnostic methods are inadequate. Imaging techniques such as CT and MRI are not reliable for early detection and biomarkers for PDAC have been hard to identify. However, recent research suggests that urinary biomarkers may be useful for early detection of PDAC.
+
+This report presents a machine learning approach for the early detection of PDAC using urinary biomarkers such as creatinine, LYVE1, REG1A, REG1B, and TFF1. A Java Wrapper is used to predict if a patient has PDAC, benign pancreatic conditions, or no PDAC. The data for this study was obtained from Kaggle and analyzed using RStudio Markdown. The goal of this report is to investigate the research question: "Is it possible to detect pancreatic cancer using values of the urinary biomarkers?" and demonstrate the potential usefulness of this machine learning approach for early detection of PDAC and to provide insight into the biomarkers that can be used for this purpose. By providing a way to detect PDAC early, this machine learning approach could help improve patient outcomes and increase the chances of survival.
+
+# Material & Methods
+## Materials
+The data used was obtained from kaggle (https://www.kaggle.com/datasets/johnjdavisiv/urinary-biomarkers-for-pancreatic-cancer).  
+The project was developed using github:
+github for analysis: https://github.com/marcelsetz/Thema09_2223  
+github for Weka API: https://github.com/marcelsetz/Thema09_JavaWrapper  
+  
+Table with software used:
+
+Software         | Version         
+---------------- | ----------------
+R                | 4.0.4           
+RStudio          | 4.0.3
+RMarkdown        | 2.11
+Java             | 17
+JDK (Java)       | 11
+SDK (Java)       | 17
+Gradle           | 7.1
+Weka             | 3.8.5
+
+## Methods
+The data for this study was obtained from Kaggle and analyzed using R in RStudio. To clean and process the data, an exploratory data analysis (EDA) was performed. A codebook was created to visualize the data, and the data was read and visualized using a table and a boxplot created with ggplot2 in R. Outliers identified in the boxplot were analyzed to determine if they could be removed or not. The correlation data was also obtained to investigate if the biomarkers correlated with each other in any way.
+
+To determine the best machine learning algorithm, a quality metric that fit the data was selected. The false negatives must be as low as possible and therefore, the false negative rate (FNR) must be as low as possible for the machine learning steps. The algorithm was then evaluated using a 10-fold cross-validation for accurate results and a baseline accuracy was established using ZeroR.
+
+The data was then processed in the Weka Experimenter using all machine learning algorithms. A table was created using the outputted data of all the quality metrics. Based on the results, a java wrapper was created, allowing the user to input a file with urinary biomarker values, and the program will predict the diagnosis.
 
 # Results
-Here's a comparison of every biomarker to see if they correlate with each other in any way.
-```{r}
+The correlation data obtained during the EDA process helped to investigate if the biomarkers correlated with each other in any way. By understanding the correlation between the biomarkers, it was possible to identify which biomarkers could be used as predictors of others.
+
+By analyzing the correlation matrix, it was possible to identify if any of the biomarkers were highly correlated with others. For example, if creatinine and LYVE1 had a high positive correlation coefficient, it would indicate that when the creatinine levels were high, the LYVE1 levels were also high. This information can be used to identify which biomarkers could be used as predictors of others and which biomarkers are more informative.
+
+Additionally, it also helped to identify if there is any multicollinearity in the data. Multicollinearity occurs when two or more independent variables in a regression analysis are highly correlated. This can lead to unstable and unreliable estimates of the regression coefficients and can also cause problems in interpreting the results of the analysis. By identifying any multicollinearity, it was possible to address it and ensure that the machine learning algorithm was not affected by it.
+
+Overall, the correlation data helped in identifying which biomarkers are more informative, which biomarkers could be used as predictors of others, and if there is any multicollinearity in the data. This information was used to select the best quality metric and machine learning algorithm.
+```{r, fig.width = 12,fig.height = 10}
 myData <- read.csv("Data/Debernardi et al 2020 data.csv")
 
 log <- log(myData[9:14] +1)
@@ -46,16 +92,42 @@ p6 <- ggplot(myData, aes(x=TFF1, y=REG1B)) +
   geom_smooth(method='lm', formula = y~x) +
   ggtitle("TFF1 vs REG1B")
 
-grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3)
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3, bottom="Figure 6: Scatter plot showing the correlation between creatinine, LYVE1, REG1A, REG1B, and TFF1 biomarkers in urinary samples of pancreatic cancer patients")
 ```
+There seems to be a slight correlation in a few of these. This is important for the classification stage, because these biomarkers do tell something about the value of the others and also the possible diagnosis. Here's the heatmap to further analyze the correlation.
 
+```{r, fig.width = 8,fig.height = 5}
+data_corr <- myData[,c(2, 4, 7:10)]
+corr_matrix <- cor(data_corr)
+corr_matrix <- round(corr_matrix, 2)
+par(mar=c(5,5,5,0))
+heatmap(corr_matrix,
+scale = "none",
+add.expr = expr,
+Colv = NA,
+Rowv = NA,
+col = rev(brewer.pal(9, "RdBu")),
+labRow = colnames(data_corr),
+labCol = colnames(data_corr),
+cex.lab = 0.8,
+main = "Correlation Heatmap of urinary biomarkers")
+legend("topright",
+legend = c("-1", "-0.8", "-0.6", "-0.4", "-0.2", "0", "0.2", "0.4", "0.6", "0.8", "1"),
+fill = rev(brewer.pal(9, "RdBu")),
+title = "Correlation value")
+expr <- function(x, digits = 2, ...) {
+paste0(x)
+}
+```  
+The heatmap created above represents the correlation between the creatinine, LYVE1, REG1A, REG1B, and TFF1 biomarkers in urinary samples of pancreatic cancer patients. The correlation values range from -1 to 1, with -1 indicating a strong negative correlation, 0 indicating no correlation, and 1 indicating a strong positive correlation.
 
-```{r}
-cor <- cor(myData[,c(2, 4, 7:10)])
-pander(cor, caption = "correlation matrix")
-heatmap(cor, scale = "column", Rowv = NA, Colv = NA, main = "Heatmap")
-```
-It is visible here that the TFF1 biomarker correlates the most with every other biomarker. In the correlation matrix, it is possible to see that the highest correlation is between the biomarkers TFF1 and LYVE1. However in this matrix there are some outliers that may be important. It is in about 67% of the samples the case that the higher the value of TFF1, the higher the value of LYVE1.
+The color ramp used in the heatmap ranges from blue for negative correlation to red for positive correlation. As you move from blue to red, the correlation becomes stronger. The darker the color, the stronger the correlation. The diagonal line of the heatmap is where the variable is correlated to itself, this is always 1, and this is represented by a dark red color.
+
+To interpret the heatmap, you should look for patterns and trends in the colors. For example, if you notice that a particular biomarker has strong positive correlations with several other biomarkers, it might indicate that this biomarker is a good predictor of pancreatic cancer.
+
+On the other hand, if you notice a biomarker that has mostly weak or negative correlations with the other biomarkers, it might indicate that this biomarker is not a good predictor of pancreatic cancer. You should also look for clusters of biomarkers that are positively or negatively correlated, which could indicate that these biomarkers work together in some way.
+
+It is also worth noting that this heatmap is only one part of the overall analysis, and that correlation does not imply causality. Therefore, it is important to consider other factors such as the p-values of the correlation coefficients and the biological plausibility of the correlations before making any conclusions.
 
 
 ```{r}
@@ -116,14 +188,23 @@ p12 <- ggplot(myData3, aes(x=REG1B)) +
 grid.arrange(p1, p4, p7, p10, p2, p5, p8, p11, p3, p6, p9, p12, nrow = 3)
 ```
 
-The values in these biomarkers show quite the difference here, With the TFF1 as well as the LYVe1 biomarker, the higher the value, the more likely it is that this sample has PDAC.
+Creating the distribution of every biomarker with every diagnosis allows for a visual representation of the distribution of biomarker values for each diagnosis. This can be useful for identifying patterns or trends in the data that may not be immediately apparent from a simple summary of the data. For example, in this case, the distribution plots reveal that higher LYVE1 and TFF1 values are associated with a higher likelihood of PDAC. This information can be used to inform further research and the development of diagnostic tools for pancreatic cancer. Additionally, these distribution plots can be used to inform the selection of cut-off values for biomarkers in diagnostic tests, as well as to identify potential biomarkers for use in combination tests for improved diagnostic accuracy.
 
-```{r}
-pca <- prcomp(myData[,c(2, 4, 7:10)], center = TRUE, scale. = TRUE)
-ggbiplot(pca, obs.scale = 1, var.scale = 1, groups = myData$diagnosis,
-ellipse = F, circle = T)
-```
 
 
 # Conclusion & Discussion
-Using our research and data analysis it is safe to assume that some biomarkers may be important for the diagnosis of PDAC. Especially the biomarkers TFF1 and LYVE1 show a significant correlation with each other and it was visible that the higher those values, the higher the chance of PDAC is. The effect of non-cancerous pancreatic conditions and PDAC on TFF1 and LYVE1 is the best visible, the rest of the biomarkers don't show a significant effect on pancreatic conditions. Ofcourse this is extremely reliable, due to all the outliers. But if you take a urine sample from a patient and both the TFF1 and LYVE1 biomarkers are a high value, then maybe it's wise to further investigate if the patient has PDAC or not
+The results of this study indicate that the urinary biomarkers creatinine, LYVE1, REG1A, REG1B, and TFF1 have the potential to be used for early detection of pancreatic ductal adenocarcinoma (PDAC). The analysis of the distribution of these biomarkers in relation to the diagnosis of the samples showed that higher values of LYVE1 and TFF1 were associated with a higher likelihood of a sample being diagnosed with PDAC. Additionally, machine learning algorithms were applied to the data to determine the best method for predicting the diagnosis of a sample based on its biomarker values. The SMO algorithm was found to generate the least amount of false negatives, making it the best option for use in a diagnostic tool.
+
+The correlation and heatmap plots further support the potential utility of these biomarkers in detecting PDAC. The correlation between the biomarkers and the diagnosis was found to be strongest for LYVE1 and TFF1, providing additional evidence for their usefulness in early detection.
+
+It is important to note that this study is based on a limited dataset and further research is needed to confirm the findings. Additionally, the use of these biomarkers for diagnostic purposes would need to be validated in larger, clinical studies. Nonetheless, the results of this study provide a promising starting point for the development of a simple, non-invasive test for early detection of PDAC.
+
+In conclusion, the findings of this study suggest that the urinary biomarkers creatinine, LYVE1, REG1A, REG1B, and TFF1 have potential utility in the early detection of PDAC. Further research is needed to confirm these results and validate their use in a diagnostic tool, but the results of this study provide a promising starting point for the development of a simple, non-invasive test for PDAC.
+
+# Project proposal
+This research can be improved in multiple ways. These possibilities are written for the minor Application Design.  
+The main issue here is that the Java wrapper is not very user-friendly. The program can now only be runned via the command line with a few options. For a non-programmer, it can be really hard to understand.  
+
+A web application implementing this program within a user-friendly environment can drastically improve the way this program is used.  
+
+The target audience would be people working in health care with large amounts of biomarker data, that needs to be diagnosed. The program can process a lot of patients very quickly.  
